@@ -1,6 +1,6 @@
-# [Project name]
+# Driving Lesson Booking
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+مسار هو أساس عربي أولاً لحجز دروس القيادة وإدارة المواعيد بين الطلاب والمدرّبين.
 
 ## Run & Operate
 
@@ -22,23 +22,38 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/driving-lesson-booking/` — React + Vite web app, routing, Clerk UI, RTL theme, and placeholder dashboards.
+- `artifacts/api-server/` — Express API, Clerk middleware, role protection, and booking read models.
+- `lib/api-spec/openapi.yaml` — مصدر عقد الـAPI الوحيد؛ شغّل codegen بعد أي تعديل.
+- `lib/db/src/schema/` — جداول PostgreSQL/Drizzle مقسّمة حسب المجال.
+- `artifacts/driving-lesson-booking/src/index.css` — tokens ونظام الألوان والخطوط العربية.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Clerk هو مصدر جلسة تسجيل الدخول؛ `app_users` هو جسر بيانات المنتج الذي يحمل الدور الوظيفي.
+- المستخدم المسجّل يُنشأ في `app_users` عند أول طلب جلسة، ويبدأ بدور `student`; ترقية المدرّب/المدير تبقى قرارًا إداريًا في قاعدة البيانات.
+- OpenAPI يسبق الكود المولّد؛ الواجهة تستخدم hooks المولّدة بدل عقود أو أنواع يدوية.
+- التواريخ اليومية للحصص محفوظة كـ`date` مستقلة عن المنطقة الزمنية، بينما أوقات البداية والنهاية نصوص `HH:mm`.
+- الواجهة تستخدم العربية وRTL الآن، مع فصل النصوص والصفحات بما يسمح بإضافة Hebrew وEnglish لاحقًا.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- صفحة عامة عربية.
+- تسجيل دخول وتسجيل حساب عبر Clerk.
+- مساران محميان للطالب والمدرّب/المدير.
+- بنية قاعدة بيانات للمستخدمين، الطلاب، المدرّبين، إتاحة الحصص، والحجوزات.
+- صفحات dashboard أساسية تعرض حالات الفراغ الحقيقية من API دون بيانات وهمية.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- المرحلة الحالية تأسيس فقط: لا مدفوعات، ولا WhatsApp/SMS، ولا إشعارات متقدمة، ولا بيانات وهمية.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- بعد تعديل `lib/api-spec/openapi.yaml` شغّل `pnpm --filter @workspace/api-spec run codegen`.
+- استخدم `pnpm run typecheck` للفحص العام، ولا تشغّل `pnpm dev` من جذر المشروع.
+- جلسة Clerk في الويب تعتمد على cookie؛ لا تضف Bearer token أو `setAuthTokenGetter` إلى تطبيق الويب.
+- سجلات الـAPI تستخدم Pino؛ لا تستخدم `console.log` في كود الخادم.
 
 ## Pointers
 

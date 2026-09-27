@@ -1,0 +1,1 @@
+- [Clerk runtime compatibility](clerk-runtime-compatibility.md) — keep Clerk React and shared runtime releases aligned; verify Vite optimization after dependency changes.

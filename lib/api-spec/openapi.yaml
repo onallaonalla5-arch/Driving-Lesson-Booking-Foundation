@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API contract for the driving lesson booking platform foundation
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication and current user context
+  - name: student
+    description: Student portal foundation
+  - name: instructor
+    description: Instructor portal foundation
+  - name: availability
+    description: Lesson availability foundation
+  - name: bookings
+    description: Booking foundation
 paths:
   /healthz:
     get:
@@ -24,7 +34,114 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /auth/session:
+    get:
+      operationId: getAuthSession
+      tags: [auth]
+      summary: Get the current authentication session
+      description: Returns the current Clerk-backed session and application role when available.
+      responses:
+        "200":
+          description: Current session state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+  /student/dashboard:
+    get:
+      operationId: getStudentDashboard
+      tags: [student]
+      summary: Get the student dashboard foundation
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Student dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentDashboard"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Student role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /instructor/dashboard:
+    get:
+      operationId: getInstructorDashboard
+      tags: [instructor]
+      summary: Get the instructor dashboard foundation
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Instructor dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstructorDashboard"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Instructor role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /availability:
+    get:
+      operationId: listLessonAvailability
+      tags: [availability]
+      summary: List published lesson availability
+      description: Returns the currently published lesson availability. Empty until availability is configured.
+      responses:
+        "200":
+          description: Available lesson slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LessonAvailability"
+  /bookings:
+    get:
+      operationId: listBookings
+      tags: [bookings]
+      summary: List the current user's bookings
+      security:
+        - clerkSession: []
+      responses:
+        "200":
+          description: Bookings visible to the current user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
+  securitySchemes:
+    clerkSession:
+      type: apiKey
+      in: cookie
+      name: __session
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +150,105 @@ components:
           type: string
       required:
         - status
+    UserRole:
+      type: string
+      enum: [student, instructor, admin]
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkUserId:
+          type: string
+        email:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+        displayName:
+          type: string
+      required: [id, clerkUserId, email, role, displayName]
+    AuthSession:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        user:
+          anyOf:
+            - $ref: "#/components/schemas/UserSummary"
+            - type: "null"
+      required: [authenticated, user]
+    LessonAvailability:
+      type: object
+      properties:
+        id:
+          type: integer
+        instructorId:
+          type: integer
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+        endTime:
+          type: string
+        status:
+          type: string
+          enum: [available, held, booked, blocked]
+      required: [id, instructorId, date, startTime, endTime, status]
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+        availabilityId:
+          type: integer
+        studentId:
+          type: integer
+        instructorId:
+          type: integer
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+        endTime:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, completed, cancelled]
+      required: [id, availabilityId, studentId, instructorId, date, startTime, endTime, status]
+    StudentDashboard:
+      type: object
+      properties:
+        upcomingBookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+        availableSlots:
+          type: array
+          items:
+            $ref: "#/components/schemas/LessonAvailability"
+      required: [upcomingBookings, availableSlots]
+    InstructorDashboard:
+      type: object
+      properties:
+        upcomingBookings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Booking"
+        availability:
+          type: array
+          items:
+            $ref: "#/components/schemas/LessonAvailability"
+        studentCount:
+          type: integer
+        bookingCount:
+          type: integer
+      required: [upcomingBookings, availability, studentCount, bookingCount]
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
 

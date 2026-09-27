@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Driving Lesson Booking"
+description = "A professional Arabic-first driving lesson booking foundation for students and instructors, with role-aware dashboards, RTL support, and a scalable booking data model."
+version = "1.0.0"
+id = "artifacts/driving-lesson-booking"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25837
+
+[services.development]
+run = "pnpm --filter @workspace/driving-lesson-booking run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/driving-lesson-booking", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/driving-lesson-booking/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25837"
+BASE_PATH = "/"
